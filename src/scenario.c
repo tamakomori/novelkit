@@ -6,7 +6,7 @@
  */
 
 /*
- * scenario.c: Scenario management.
+ * scenario.c: Scenario Management
  */
 
 #include "novelkit.h"
@@ -51,13 +51,14 @@ static int cmd_size;
 
 /* Forward declaration. */
 static void destroy_commands(void);
+static void print_error(struct rt_env *rt);
 static bool parse_tag_callback(const char *name, int props, const char **prop_name, const char **prop_val);
 static bool parse_tag_document(const char *doc, bool (*callback)(const char *, int, const char **, const char **), char **error_msg, int *error_line);
 
 /*
  * Initialize the scenario module.
  */
-bool init_scenario(void)
+bool scenario_init(void)
 {
 	destroy_commands();
 
@@ -67,7 +68,7 @@ bool init_scenario(void)
 /*
  * Cleanup the scenario module.
  */
-void cleanup_scenario(void)
+void scenario_cleanup(void)
 {
 	destroy_commands();
 }
@@ -84,7 +85,7 @@ static void destroy_commands(void)
 		cur_file = NULL;
 	}
 
-	for (i = 0; i < command_size; i++) {
+	for (i = 0; i < cmd_size; i++) {
 		c = &cmd[i];
 		free(c->tag_name);
 		for (j = 0; j < PROP_MAX; j++) {
@@ -103,13 +104,15 @@ static void destroy_commands(void)
 /*
  * Load a scenario file and move to it.
  */
-bool move_to_scenario(const char *file)
+bool scenario_move_to_file(struct rt_env *rt, const char *file)
 {
 	char *buf;
 	char *error_message;
 	int error_line;
 
-	if (!load_file_content(file, &buf))
+	UNUSED_PARAMETER(rt);
+
+	if (!common_load_file_content(file, &buf))
 		return false;
 
 	destroy_commands();
@@ -126,13 +129,14 @@ bool move_to_scenario(const char *file)
 	return true;
 }
 
-bool parse_tag_callback(const char *name, int props, const char **prop_name, const char **prop_value)
+/* Callback for when a tag is read. */
+static bool parse_tag_callback(const char *name, int props, const char **prop_name, const char **prop_value)
 {
 	struct command *c;
 	int i;
 
 	/* If command table is full. */
-	if (command_size >= COMMAND_MAX) {
+	if (cmd_size >= COMMAND_MAX) {
 		api_error("Too many commands.");
 		return false;
 	}
@@ -169,15 +173,62 @@ bool parse_tag_callback(const char *name, int props, const char **prop_name, con
  * Run a tag.
  *  - cont ... set to true if a next tag is requied to be run continuously.
  */
-bool run_a_tag(bool *cont)
+bool scenario_run_tag(struct rt_env *rt)
 {
 	struct command *c;
+	struct rt_value dict;
+	struct rt_value str;
+	struct rt_value ret;
+	int i;
+	bool succeeded;
 
 	assert(cur_index < cmd_size);
 
 	c = &cmd[cur_index];
 
-	
+	succeeded = false;
+	do {
+		/* Make a parameter dictionary. */
+		if (!rt_make_empty_dict(rt, &dict))
+			break;
+
+		/* Setup properties as dictionary items. */
+		for (i = 0; i < c->prop_count; i++) {
+			if (!rt_make_string(rt, &str, c->prop_value[i]))
+				break;
+			if (!rt_set_dict_elem(rt, &dict, c->prop_name[i], &str))
+				break;
+		}
+
+		/* Call the corresponding function. */
+		if (!rt_call_with_name(rt, c->tag_name, NULL, 1, &dict, &ret))
+			break;
+
+		/* Ok. */
+		succeeded = true;
+	} while (0);
+
+	/* If failed: */
+	if (!succeeded) {
+		print_error(rt);
+		return false;
+	}
+
+	/* Ok. */
+	return true;
+}
+
+/*
+ * Helper
+ */
+
+/* Print an error message. */
+static void print_error(struct rt_env *rt)
+{
+	sys_error(_("%s:%d: error: %s\n"),
+		  rt_get_error_file(rt),
+		  rt_get_error_line(rt),
+		  rt_get_error_message(rt));
 }
 
 /*

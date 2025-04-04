@@ -6,7 +6,7 @@
  */
 
 /*
- * scenario.h: Scenario management.
+ * scenario.h: Scenario management
  */
 
 #ifndef NOVELKIT_SCENARIO_H
@@ -14,8 +14,9 @@
 
 #include "compat.h"
 
-bool init_scenario(void);
-void cleanup_scenario(void);
-bool move_to_scenario(const char *file);
+bool scenario_init(void);
+void scenario_cleanup(void);
+bool scenario_move_to_file(struct rt_env *rt, const char *file);
+bool scenario_run_tag(struct rt_env *rt);
 
 #endif

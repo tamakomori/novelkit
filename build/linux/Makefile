@@ -21,17 +21,8 @@ CFLAGS=\
 	-Wno-multichar
 
 LDFLAGS=\
-	../../../linguine/build/linux/liblinguine.a \
-	../../../mediakit/build/linux/libmediakit.a \
-	../../../mediakit/build/linux/libroot/lib/libpng.a \
-	../../../mediakit/build/linux/libroot/lib/libjpeg.a \
-	../../../mediakit/build/linux/libroot/lib/libwebp.a \
-	../../../mediakit/build/linux/libroot/lib/libvorbis.a \
-	../../../mediakit/build/linux/libroot/lib/libogg.a \
-	../../../mediakit/build/linux/libroot/lib/libbrotlidec.a \
-	../../../mediakit/build/linux/libroot/lib/libbrotlicommon.a \
-	../../../mediakit/build/linux/libroot/lib/libbz2.a \
-	../../../mediakit/build/linux/libroot/lib/libz.a \
+	../../../linguine/build/linux-static/liblinguine.a \
+	../../../mediakit/build/linux-static/libmediakit.a \
 	-lX11 \
 	-lasound \
 	-lasound \
@@ -45,7 +36,7 @@ LDFLAGS=\
 OBJS=\
 	objs/api.o \
 	objs/common.o \
-	objs/novelkit.o \
+	objs/main.o \
 	objs/scenario.o
 
 all: novelkit
@@ -59,7 +50,7 @@ objs/api.o: ../../src/api.c objs
 objs/common.o: ../../src/common.c objs
 	$(CC) -c -o $@ $(CPPFLAGS) $(CFLAGS) $<
 
-objs/novelkit.o: ../../src/novelkit.c
+objs/main.o: ../../src/main.c
 	$(CC) -c -o $@ $(CPPFLAGS) $(CFLAGS) $<
 
 objs/scenario.o: ../../src/scenario.c objs

@@ -14,6 +14,6 @@
 
 #include "compat.h"
 
-bool load_file_content(const char *file, char **buf);
+bool common_load_file_content(const char *file, char **buf);
 
 #endif

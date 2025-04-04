@@ -30,7 +30,7 @@ bool NovelKit_moveToScenario(struct rt_env *rt)
 	if (!get_string_param(rt, "file", &file))
 		return false;
 
-	if (!move_to_scenario(file)) {
+	if (!scenario_move_to_file(rt, file)) {
 		copy_api_error(rt);
 		return false;
 	}
